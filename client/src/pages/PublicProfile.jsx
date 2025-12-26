@@ -11,7 +11,7 @@ const PublicProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/posts/profile/${username}`);
+        const res = await axios.get(`https://meraki-api.onrender.com/api/posts/profile/${username}`);
         setPosts(res.data);
       } catch (err) {
         console.log(err);
