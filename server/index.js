@@ -8,11 +8,13 @@ const postRoutes = require('./routes/posts');
 
 const app = express();
 
-// --- FIXED CORS SETTINGS ---
+// --- THE FINAL CORS FIX ---
+// This configuration allows your Vercel site to access the API 
+// and handles the "Preflight" requests that were causing the red errors.
 app.use(cors({
-  origin: ["https://meraki-art.vercel.app", "http://localhost:5173"],
+  origin: true, // This automatically allows the origin making the request
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
@@ -23,16 +25,19 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
-// Health Check
+// Root Health Check (To verify the server is awake)
 app.get('/', (req, res) => {
-  res.send('Meraki API is live and healthy!');
+  res.send('Meraki Art API is Live and Running!');
 });
 
 const PORT = process.env.PORT || 5000;
 
+// Database Connection
 mongoose.connect(process.env.TEST_URI)
   .then(() => {
     console.log('Connected to MongoDB');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch(err => console.error('MongoDB connection error:', err));
+  .catch(err => {
+    console.error('MongoDB connection error:', err);
+  });
