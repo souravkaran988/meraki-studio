@@ -20,7 +20,7 @@ const Home = () => {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get("https://meraki-api.onrender.com/api/posts");
+      const res = await axios.get("https://meraki-art.onrender.com/api/posts");
       setPosts(res.data);
     } catch (err) {
       console.log(err);
@@ -30,7 +30,7 @@ const Home = () => {
   const handleLike = async (postId) => {
     if (!user) return alert("Please login to like posts!");
     try {
-      await axios.put(`https://meraki-api.onrender.com/api/posts/${postId}/like`, { userId: user._id });
+      await axios.put(`https://meraki-art.onrender.com/api/posts/${postId}/like`, { userId: user._id });
       fetchPosts(); 
     } catch (err) {
       console.log(err);
@@ -42,7 +42,7 @@ const Home = () => {
     if (!user) return alert("Please login to comment!");
     
     try {
-      await axios.put(`https://meraki-api.onrender.com/api/posts/${postId}/comment`, { 
+      await axios.put(`https://meraki-art.onrender.com/api/posts/${postId}/comment`, { 
         userId: user._id, 
         text: commentText 
       });
@@ -57,7 +57,7 @@ const Home = () => {
   const handleDeleteComment = async (postId, commentId) => {
     if(!window.confirm("Delete this comment?")) return;
     try {
-        await axios.put(`https://meraki-api.onrender.com/api/posts/${postId}/comment/delete`, {
+        await axios.put(`https://meraki-art.onrender.com/api/posts/${postId}/comment/delete`, {
             commentId: commentId
         });
         fetchPosts(); // Refresh to remove comment from UI

@@ -13,7 +13,7 @@ const Register = () => {
     e.preventDefault();
     setError(false);
     try {
-      const res = await axios.post("https://meraki-api.onrender.com/api/auth/register", {
+      const res = await axios.post("https://meraki-art.onrender.com/api/auth/register", {
         username,
         email,
         password,

@@ -32,7 +32,7 @@ const Dashboard = () => {
 
   const fetchUserPosts = async (username) => {
     try {
-      const res = await axios.get(`https://meraki-api.onrender.com/api/posts/profile/${username}`);
+      const res = await axios.get(`https://meraki-art.onrender.com/api/posts/profile/${username}`);
       setPosts(res.data);
     } catch (err) {
       console.log(err);
@@ -78,11 +78,11 @@ const Dashboard = () => {
 
       if (editMode) {
         // UPDATE Existing Post
-        await axios.put(`https://meraki-api.onrender.com/api/posts/${currentPostId}`, postData);
+        await axios.put(`https://meraki-art.onrender.com/api/posts/${currentPostId}`, postData);
         alert("Post Updated Successfully!");
       } else {
         // CREATE New Post
-        await axios.post("https://meraki-api.onrender.com/api/posts", postData);
+        await axios.post("https://meraki-art.onrender.com/api/posts", postData);
       }
       
       resetForm(); // Clear form
@@ -116,7 +116,7 @@ const Dashboard = () => {
             const compressedAvatar = canvas.toDataURL("image/jpeg", 0.7);
             setAvatar(compressedAvatar);
             try {
-                const res = await axios.put(`https://meraki-api.onrender.com/api/users/${user._id}`, {
+                const res = await axios.put(`https://meraki-art.onrender.com/api/users/${user._id}`, {
                     userId: user._id,
                     profilePic: compressedAvatar
                 });
@@ -156,7 +156,7 @@ const Dashboard = () => {
   const handleDelete = async (postId) => {
     if(window.confirm("Are you sure you want to delete this art?")) {
       try {
-        await axios.delete(`https://meraki-api.onrender.com/api/posts/${postId}`);
+        await axios.delete(`https://meraki-art.onrender.com/api/posts/${postId}`);
         setPosts(posts.filter(p => p._id !== postId));
         // If we deleted the post we were editing, reset form
         if (currentPostId === postId) resetForm();
