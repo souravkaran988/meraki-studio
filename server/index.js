@@ -8,10 +8,12 @@ const postRoutes = require('./routes/posts');
 
 const app = express();
 
-// --- UPDATED CORS CONFIGURATION ---
+// --- FIXED CORS SETTINGS ---
 app.use(cors({
   origin: ["https://meraki-art.vercel.app", "http://localhost:5173"],
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 app.use(express.json());
@@ -21,9 +23,9 @@ app.use('/uploads', express.static('uploads'));
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
-// Health Check for Render
+// Health Check
 app.get('/', (req, res) => {
-  res.send('Meraki API is running...');
+  res.send('Meraki API is live and healthy!');
 });
 
 const PORT = process.env.PORT || 5000;
