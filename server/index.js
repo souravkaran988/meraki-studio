@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -8,13 +10,17 @@ const postRoutes = require('./routes/posts');
 
 const app = express();
 
-// --- THE PERMANENT CORS FIX ---
+// Create uploads folder if it doesn't exist
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+
+// CORS Middleware
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*"); 
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  
-  // Handle the 'Preflight' OPTIONS request immediately
   if (req.method === 'OPTIONS') {
     return res.status(200).json({});
   }
@@ -22,8 +28,11 @@ app.use((req, res, next) => {
 });
 
 app.use(express.json());
-app.use('/uploads', express.static('uploads'));
 
+// Serve the uploads folder statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postRoutes);
 
@@ -37,4 +46,4 @@ mongoose.connect(process.env.TEST_URI)
     console.log('Connected to MongoDB');
     app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
   })
-  .catch(err => console.error(err));
+  .catch((err) => console.log("MongoDB Connection Error: ", err));
