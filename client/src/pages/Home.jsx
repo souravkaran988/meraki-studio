@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Heart, MessageCircle, Search, User, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Search, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Home = () => {
@@ -12,7 +12,7 @@ const Home = () => {
   const [activeCommentBox, setActiveCommentBox] = useState(null);
   const [commentText, setCommentText] = useState("");
 
-  // FIX: Added the Backend URL prefix
+  // Backend URL
   const PF = "https://meraki-art.onrender.com";
 
   useEffect(() => {
@@ -26,8 +26,14 @@ const Home = () => {
       const res = await axios.get(`${PF}/api/posts`);
       setPosts(res.data);
     } catch (err) {
-      console.log(err);
+      console.log("Error fetching posts:", err);
     }
+  };
+
+  // Helper to handle image paths correctly
+  const getImageUrl = (imgStr) => {
+    if (!imgStr) return "https://via.placeholder.com/400";
+    return imgStr.startsWith("http") || imgStr.startsWith("data") ? imgStr : PF + imgStr;
   };
 
   const handleLike = async (postId) => {
@@ -68,12 +74,6 @@ const Home = () => {
     }
   };
 
-  // FIX: Helper to attach Backend URL to image paths
-  const getImageUrl = (imgStr) => {
-    if (!imgStr) return "";
-    return imgStr.startsWith("http") || imgStr.startsWith("data") ? imgStr : PF + imgStr;
-  };
-
   const filteredPosts = posts.filter(p => 
     p.title.toLowerCase().includes(search.toLowerCase()) || 
     p.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
@@ -103,36 +103,38 @@ const Home = () => {
         {filteredPosts.map((post) => (
           <div key={post._id} className="bg-gray-800 rounded-xl overflow-hidden shadow-lg border border-gray-700 hover:border-gray-600 transition flex flex-col">
             
-            {/* Image */}
-            <div className="h-64 overflow-hidden relative group cursor-pointer">
-              {/* FIX: Use getImageUrl helper */}
-              <img src={getImageUrl(post.image)} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition duration-500" />
+            {/* Image Link to Public Profile */}
+            <Link to={`/profile/${post.user?.username}`} className="h-64 overflow-hidden relative group cursor-pointer">
+              <img 
+                src={getImageUrl(post.image)} 
+                alt={post.title} 
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+              />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                <span className="text-white font-bold tracking-wider">{post.title}</span>
+                <span className="text-white font-bold tracking-wider">View Profile</span>
               </div>
-            </div>
+            </Link>
 
             {/* Content */}
             <div className="p-4 flex flex-col flex-grow">
               
-              {/* Creator Info */}
+              {/* Creator Info Redirection */}
               <Link to={`/profile/${post.user?.username}`} className="flex items-center gap-2 mb-3 w-fit hover:opacity-80 transition">
                  <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center overflow-hidden border border-gray-500">
-                    {/* FIX: Use getImageUrl helper */}
-                    <img src={getImageUrl(post.user?.profilePic)} className="w-full h-full object-cover" onError={(e) => e.target.src = "https://via.placeholder.com/150"}/>
+                    <img 
+                      src={getImageUrl(post.user?.profilePic)} 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => e.target.src = "https://via.placeholder.com/150"}
+                    />
                  </div>
                  <span className="text-sm text-gray-300 font-medium hover:text-blue-400 hover:underline">
                     {post.user?.username || "Unknown"}
                  </span>
               </Link>
 
+              <h2 className="text-lg font-bold mb-1">{post.title}</h2>
               <p className="text-gray-400 text-sm mb-3 line-clamp-2">{post.description}</p>
-              <div className="flex flex-wrap gap-1 mb-4">
-                {post.tags.slice(0, 3).map((tag, i) => (
-                   <span key={i} className="text-xs bg-gray-700 text-blue-300 px-2 py-0.5 rounded-full">#{tag}</span>
-                ))}
-              </div>
-
+              
               {/* Actions */}
               <div className="mt-auto border-t border-gray-700 pt-3 flex items-center justify-between">
                 <button 
@@ -155,13 +157,13 @@ const Home = () => {
 
             {/* Comment Section */}
             {activeCommentBox === post._id && (
-              <div className="bg-gray-900 p-3 border-t border-gray-700 animate-fade-in">
+              <div className="bg-gray-900 p-3 border-t border-gray-700">
                 <div className="max-h-32 overflow-y-auto mb-2 space-y-2">
                   {post.comments.length === 0 ? <p className="text-xs text-gray-500">No comments yet.</p> : (
                     post.comments.map((c, idx) => (
                       <div key={idx} className="flex justify-between items-start group">
                         <div className="text-xs">
-                           <span className="font-bold text-gray-300 mr-1">{c.user?.username || "User"}:</span>
+                           <span className="font-bold text-gray-300 mr-1">{c.user?.username}:</span>
                            <span className="text-gray-400">{c.text}</span>
                         </div>
                         {user && c.user?._id === user._id && (
