@@ -48,12 +48,12 @@ const Dashboard = () => {
     e.preventDefault();
     setLoading(true);
 
-    // FIXED LOGIC: Using FormData to handle the image file upload
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", desc);
     formData.append("tags", tags);
-    
+    formData.append("userId", user._id); // ADD THIS LINE: Send the user ID from state
+
     if (uploadType === "file") {
       if (!imageFile && !editMode) {
         alert("Please select a file");
@@ -62,8 +62,10 @@ const Dashboard = () => {
       }
       formData.append("image", imageFile);
     } else {
-      formData.append("image", image); // If user provides a direct URL
+      formData.append("image", image);
     }
+    
+    // ... rest of your axios call
 
     try {
       const token = JSON.parse(localStorage.getItem("user")).token;
