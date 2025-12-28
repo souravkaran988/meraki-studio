@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Plus, Image as ImageIcon, Loader, Upload, Link as LinkIcon, Trash2, Camera, Pencil, X } from "lucide-react";
+import { Plus, Image as ImageIcon, Loader, Upload, Link as LinkIcon, Trash2, Camera, Pencil, X, Heart, MessageCircle } from "lucide-react";
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
@@ -10,8 +10,8 @@ const Dashboard = () => {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [tags, setTags] = useState("");
-  const [image, setImage] = useState(""); // Used for URL type
-  const [imageFile, setImageFile] = useState(null); // Used for File type
+  const [image, setImage] = useState(""); // For URL type
+  const [imageFile, setImageFile] = useState(null); // For Physical File
   const [loading, setLoading] = useState(false);
   const [uploadType, setUploadType] = useState("file");
 
@@ -21,6 +21,9 @@ const Dashboard = () => {
   // EDIT MODE STATE
   const [editMode, setEditMode] = useState(false);
   const [currentPostId, setCurrentPostId] = useState(null);
+
+  // BACKEND URL CONFIG
+  const PF = "https://meraki-art.onrender.com";
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -33,7 +36,7 @@ const Dashboard = () => {
 
   const fetchUserPosts = async (username) => {
     try {
-      const res = await axios.get(`https://meraki-art.onrender.com/api/posts/profile/${username}`);
+      const res = await axios.get(`${PF}/api/posts/profile/${username}`);
       setPosts(res.data);
     } catch (err) {
       console.log(err);
@@ -52,7 +55,7 @@ const Dashboard = () => {
     formData.append("title", title);
     formData.append("description", desc);
     formData.append("tags", tags);
-    formData.append("userId", user._id); // ADD THIS LINE: Send the user ID from state
+    formData.append("userId", user._id);
 
     if (uploadType === "file") {
       if (!imageFile && !editMode) {
@@ -60,29 +63,27 @@ const Dashboard = () => {
         setLoading(false);
         return;
       }
-      formData.append("image", imageFile);
+      if (imageFile) formData.append("image", imageFile);
     } else {
-      formData.append("image", image);
+      formData.append("image", image); // Sending the URL string
     }
-    
-    // ... rest of your axios call
 
     try {
       const token = JSON.parse(localStorage.getItem("user")).token;
       
       if (editMode) {
-        await axios.put(`https://meraki-art.onrender.com/api/posts/${currentPostId}`, formData, {
+        await axios.put(`${PF}/api/posts/${currentPostId}`, formData, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
         });
         alert("Post updated!");
       } else {
-        await axios.post("https://meraki-art.onrender.com/api/posts", formData, {
+        await axios.post(`${PF}/api/posts`, formData, {
           headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" },
         });
         alert("Post created!");
       }
 
-      // Reset states
+      // Reset form
       setTitle("");
       setDesc("");
       setTags("");
@@ -102,7 +103,7 @@ const Dashboard = () => {
     if (!window.confirm("Delete this art?")) return;
     try {
       const token = JSON.parse(localStorage.getItem("user")).token;
-      await axios.delete(`https://meraki-art.onrender.com/api/posts/${postId}`, {
+      await axios.delete(`${PF}/api/posts/${postId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       fetchUserPosts(user.username);
@@ -126,10 +127,11 @@ const Dashboard = () => {
     const file = e.target.files[0];
     const formData = new FormData();
     formData.append("profilePic", file);
+    formData.append("userId", user._id);
 
     try {
       const token = JSON.parse(localStorage.getItem("user")).token;
-      const res = await axios.put("https://meraki-art.onrender.com/api/auth/profile-pic", formData, {
+      const res = await axios.put(`${PF}/api/auth/profile-pic`, formData, {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
       });
       setAvatar(res.data.profilePic);
@@ -142,6 +144,11 @@ const Dashboard = () => {
     }
   };
 
+  const getImageUrl = (imgStr) => {
+    if (!imgStr) return "";
+    return imgStr.startsWith("http") ? imgStr : PF + imgStr;
+  };
+
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -151,7 +158,7 @@ const Dashboard = () => {
           <div className="relative group">
             <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500 shadow-2xl bg-gray-700">
               {avatar ? (
-                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                <img src={getImageUrl(avatar)} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <Camera size={40} className="text-gray-500" />
@@ -203,7 +210,7 @@ const Dashboard = () => {
                 value={desc} onChange={(e) => setDesc(e.target.value)}
               />
               <input 
-                type="text" placeholder="Tags (comma separated: digital, abstract, oil)" 
+                type="text" placeholder="Tags (comma separated)" 
                 className="w-full bg-gray-900 border border-gray-700 p-3 rounded-xl focus:border-blue-500 outline-none transition"
                 value={tags} onChange={(e) => setTags(e.target.value)}
               />
@@ -241,7 +248,7 @@ const Dashboard = () => {
 
               <button 
                 type="submit" disabled={loading}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-900/20 transition transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
               >
                 {loading ? <Loader className="animate-spin" /> : (editMode ? "Save Changes" : "Publish Artwork")}
               </button>
@@ -255,49 +262,32 @@ const Dashboard = () => {
             <ImageIcon className="text-blue-500" /> Your Collection
           </h2>
           
-          {posts.length === 0 ? (
-            <div className="text-center py-20 bg-gray-800 rounded-2xl border border-gray-700">
-              <p className="text-gray-500 italic">No artwork posted yet. Start creating!</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {posts.map((post) => (
-                <div key={post._id} className="group bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500 transition shadow-lg relative">
-                  
-                  {/* Actions Overlay */}
-                  <div className="absolute top-3 right-3 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition">
-                      <button 
-                        onClick={() => handleEditInit(post)}
-                        className="bg-yellow-600 p-1.5 rounded-full text-white hover:bg-yellow-500"
-                        title="Edit Art"
-                      >
-                        <Pencil size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(post._id)}
-                        className="bg-red-600 p-1.5 rounded-full text-white hover:bg-red-500"
-                        title="Delete Art"
-                      >
-                        <Trash2 size={16} />
-                      </button>
-                  </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {posts.map((post) => (
+              <div key={post._id} className="group bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 hover:border-blue-500 transition shadow-lg relative">
+                
+                {/* Actions Overlay */}
+                <div className="absolute top-3 right-3 flex gap-2 z-10 opacity-0 group-hover:opacity-100 transition">
+                    <button onClick={() => handleEditInit(post)} className="bg-yellow-600 p-1.5 rounded-full text-white hover:bg-yellow-500"><Pencil size={16} /></button>
+                    <button onClick={() => handleDelete(post._id)} className="bg-red-600 p-1.5 rounded-full text-white hover:bg-red-500"><Trash2 size={16} /></button>
+                </div>
 
-                  <div className="h-48 overflow-hidden relative">
-                    <img src={post.image} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-lg text-white">{post.title}</h3>
-                    <p className="text-gray-400 text-sm truncate">{post.description}</p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {post.tags.map((tag, index) => (
-                        <span key={index} className={`text-xs bg-gray-700 text-blue-300 px-2 py-1 rounded-full`}>#{tag}</span>
-                      ))}
+                <div className="h-48 overflow-hidden relative">
+                  <img src={getImageUrl(post.image)} alt={post.title} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-bold text-lg text-white">{post.title}</h3>
+                  <p className="text-gray-400 text-sm truncate">{post.description}</p>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="flex gap-2">
+                      <span className="flex items-center gap-1 text-xs text-gray-400"><Heart size={14} /> {post.likes?.length || 0}</span>
+                      <span className="flex items-center gap-1 text-xs text-gray-400"><MessageCircle size={14} /> {post.comments?.length || 0}</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
