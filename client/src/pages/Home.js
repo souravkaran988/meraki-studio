@@ -13,7 +13,7 @@ const Home = () => {
 
   const fetchPosts = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/posts");
+      const res = await API.get("http://localhost:5000/api/posts");
       setPosts(res.data);
       setFilteredPosts(res.data);
       if (selectedPost) {
@@ -42,7 +42,7 @@ const Home = () => {
   const handleLike = async (e, postId) => {
     e.stopPropagation(); 
     try {
-      await axios.put(`http://localhost:5000/api/posts/${postId}/like`, { username: currentUser });
+      await API.put(`http://localhost:5000/api/posts/${postId}/like`, { username: currentUser });
       fetchPosts();
     } catch (err) { console.error(err); }
   };
@@ -51,7 +51,7 @@ const Home = () => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
-      await axios.post(`http://localhost:5000/api/posts/${selectedPost._id}/comment`, {
+      await API.post(`http://localhost:5000/api/posts/${selectedPost._id}/comment`, {
         username: currentUser,
         text: commentText
       });
@@ -63,7 +63,7 @@ const Home = () => {
   const handleDeleteComment = async (commentId) => {
     if (window.confirm("Delete your comment?")) {
       try {
-        await axios.delete(`http://localhost:5000/api/posts/${selectedPost._id}/comment/${commentId}`);
+        await API.delete(`http://localhost:5000/api/posts/${selectedPost._id}/comment/${commentId}`);
         fetchPosts();
       } catch (err) { console.error(err); }
     }
