@@ -249,7 +249,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import API from "../api"; // This is your custom instance
+import API from "../api.js"; // This is your custom instance
 import { 
   Upload, Trash2, Edit3, Camera, Image as ImageIcon, Sparkles, 
   Search, Check, Heart, MessageCircle, Send
