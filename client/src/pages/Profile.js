@@ -11,8 +11,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const postsRes = await axios.get(`http://localhost:5000/api/posts/user/${username}`);
-        const profileRes = await axios.get(`http://localhost:5000/api/profile/${username}`);
+        const postsRes = await API.get(`http://localhost:5000/api/posts/user/${username}`);
+        const profileRes = await API.get(`http://localhost:5000/api/profile/${username}`);
         setPosts(postsRes.data);
         setProfile(profileRes.data);
       } catch (err) { console.error(err); }
