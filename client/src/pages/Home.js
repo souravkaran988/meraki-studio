@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import API from "../api.js"
 import { Link } from "react-router-dom";
 import { Heart, MessageCircle, Share2, Send, Trash2, X, Search, Sparkles } from "lucide-react";
 

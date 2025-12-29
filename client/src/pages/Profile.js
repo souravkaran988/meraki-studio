@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import axios from "axios";
+import API from "../api.js"
 import { Heart, MessageCircle, ImageIcon, Sparkles } from "lucide-react";
 
 const Profile = () => {
