@@ -16,13 +16,24 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+
 // --- MIDDLEWARE ---
-// FIX: Added specific origin to allow your Vercel Frontend to communicate with this Backend
+// This version allows all origins to ensure the connection works immediately
 app.use(cors({
-  origin: ["https://meraki-studio-lac.vercel.app", "http://localhost:3000"],
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  credentials: true
+  origin: true, 
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
+
+app.use(express.json());
+
+// Extra Header Fix: Manual override for safety
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://meraki-studio-lac.vercel.app");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  next();
+});
 
 app.use(express.json());
 
