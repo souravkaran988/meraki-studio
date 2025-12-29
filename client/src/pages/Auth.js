@@ -10,19 +10,25 @@ const Auth = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+    // FIX: We use /auth/login because the "api" part is already in our baseURL in api.js
+    const endpoint = isLogin ? "/auth/login" : "/auth/register";
     try {
-      const res = await API.post(`http://localhost:5000${endpoint}`, formData);
+      // FIX: Removed "http://localhost:5000/api" - API.js handles the URL now
+      const res = await API.post(endpoint, formData);
+      
       if (isLogin) {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("username", res.data.username);
+        localStorage.setItem("user", JSON.stringify(res.data)); // Store full user object
         navigate("/");
         window.location.reload();
       } else {
+        alert("Registration successful! Please login.");
         setIsLogin(true);
       }
     } catch (err) {
-      alert("Error: Check your credentials");
+      console.error(err);
+      alert(err.response?.data || "Error: Check your credentials");
     }
   };
 
