@@ -1,7 +1,7 @@
 import axios from "axios";
 
-// This dynamic URL handles both Local Development and Production
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+// FIX: Hardcode your Render URL here so the frontend can find the backend
+const API_URL = "https://meraki-studio.onrender.com/api"; 
 
 const API = axios.create({
   baseURL: API_URL,
@@ -9,7 +9,9 @@ const API = axios.create({
 
 // Auto-attach token if it exists in local storage
 API.interceptors.request.use((req) => {
-  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user")); // Check if your app stores 'user' or 'token'
+  const token = user?.token || localStorage.getItem("token");
+  
   if (token) {
     req.headers.Authorization = `Bearer ${token}`;
   }
