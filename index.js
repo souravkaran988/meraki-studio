@@ -5,8 +5,10 @@ import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import fs from "fs";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// Import your Auth Route (Ensure auth.js uses "export default router")
+// Import your Auth Route
 import authRoute from "./routes/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -18,10 +20,21 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Create Uploads folder if it doesn't exist
-const uploadDir = path.join(__dirname, "uploads");
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
-app.use("/uploads", express.static(uploadDir));
+// --- CLOUDINARY CONFIGURATION (The Fix) ---
+cloudinary.config({
+  cloud_name: "dvvlo2wsr",
+  api_key: "857828378427176",
+  api_secret: "O9dA1_BLMm7UM79zXAq6Y_JOqyE",
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "meraki_uploads",
+    allowed_formats: ["jpg", "png", "jpeg", "webp"],
+  },
+});
+const upload = multer({ storage });
 
 // --- ROUTES ---
 app.use("/api/auth", authRoute);
@@ -33,8 +46,6 @@ mongoose.connect(MONGO_URI)
   .catch((err) => console.log("❌ DB Connection Error:", err));
 
 // --- SCHEMAS & MODELS ---
-
-// 1. Post Schema
 const postSchema = new mongoose.Schema({
   username: String,
   title: String,
@@ -51,7 +62,6 @@ const postSchema = new mongoose.Schema({
 
 const Post = mongoose.model("Post", postSchema);
 
-// 2. Profile Schema
 const profileSchema = new mongoose.Schema({
   username: { type: String, unique: true },
   bio: { type: String, default: "Digital Artist & Creator" },
@@ -61,16 +71,8 @@ const profileSchema = new mongoose.Schema({
 
 const Profile = mongoose.model("Profile", profileSchema);
 
-// --- MULTER CONFIGURATION ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "uploads/"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname),
-});
-const upload = multer({ storage });
-
 // --- POST ROUTES ---
 
-// 1. GET ALL POSTS
 app.get("/api/posts", async (req, res) => {
   try {
     const posts = await Post.find().sort({ createdAt: -1 });
@@ -80,7 +82,6 @@ app.get("/api/posts", async (req, res) => {
   }
 });
 
-// 2. GET POSTS BY USER
 app.get("/api/posts/user/:username", async (req, res) => {
   try {
     const { username } = req.params;
@@ -93,12 +94,11 @@ app.get("/api/posts/user/:username", async (req, res) => {
   }
 });
 
-// 3. CREATE NEW POST
 app.post("/api/posts", upload.single("imageFile"), async (req, res) => {
   try {
     const { username, title, description, imageUrl, tags } = req.body;
-    let finalImage = imageUrl;
-    if (req.file) finalImage = `http://localhost:5000/uploads/${req.file.filename}`;
+    // FIX: Use req.file.path which is the Cloudinary URL
+    let finalImage = req.file ? req.file.path : imageUrl;
     
     const newPost = new Post({ 
       username, 
@@ -115,7 +115,6 @@ app.post("/api/posts", upload.single("imageFile"), async (req, res) => {
   }
 });
 
-// 4. UPDATE A POST
 app.put("/api/posts/:id", upload.single("imageFile"), async (req, res) => {
   try {
     const { title, description, tags, imageUrl } = req.body;
@@ -126,7 +125,7 @@ app.put("/api/posts/:id", upload.single("imageFile"), async (req, res) => {
     };
 
     if (req.file) {
-      updateData.image = `http://localhost:5000/uploads/${req.file.filename}`;
+      updateData.image = req.file.path; // FIX: Use Cloudinary path
     } else if (imageUrl) {
       updateData.image = imageUrl;
     }
@@ -138,7 +137,6 @@ app.put("/api/posts/:id", upload.single("imageFile"), async (req, res) => {
   }
 });
 
-// 5. DELETE A POST
 app.delete("/api/posts/:id", async (req, res) => {
   try {
     await Post.findByIdAndDelete(req.params.id);
@@ -148,7 +146,6 @@ app.delete("/api/posts/:id", async (req, res) => {
   }
 });
 
-// 6. LIKE / UNLIKE A POST
 app.put("/api/posts/:id/like", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -166,25 +163,21 @@ app.put("/api/posts/:id/like", async (req, res) => {
   }
 });
 
-// 7. ADD A COMMENT
 app.post("/api/posts/:id/comment", async (req, res) => {
   try {
     const { username, text } = req.body;
     const comment = { username, text };
-    
     const updatedPost = await Post.findByIdAndUpdate(
       req.params.id,
       { $push: { comments: comment } },
       { new: true }
     );
-    
     res.status(200).json(updatedPost);
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-// 8. DELETE A COMMENT
 app.delete("/api/posts/:postId/comment/:commentId", async (req, res) => {
   try {
     const { postId, commentId } = req.params;
@@ -201,7 +194,6 @@ app.delete("/api/posts/:postId/comment/:commentId", async (req, res) => {
 
 // --- PROFILE ROUTES ---
 
-// 1. Get or Create Profile
 app.get("/api/profile/:username", async (req, res) => {
   try {
     let profile = await Profile.findOne({ username: req.params.username });
@@ -215,33 +207,29 @@ app.get("/api/profile/:username", async (req, res) => {
   }
 });
 
-// 2. Update Profile
 app.put("/api/profile/:username", upload.fields([
   { name: 'avatarFile', maxCount: 1 },
   { name: 'bannerFile', maxCount: 1 }
 ]), async (req, res) => {
   try {
-    const { username } = req.params;
     const { bio } = req.body;
-    
     let updateData = {};
     if (bio !== undefined) updateData.bio = bio;
 
     if (req.files) {
       if (req.files['avatarFile']) {
-        updateData.avatar = `http://localhost:5000/uploads/${req.files['avatarFile'][0].filename}`;
+        updateData.avatar = req.files['avatarFile'][0].path; // FIX
       }
       if (req.files['bannerFile']) {
-        updateData.banner = `http://localhost:5000/uploads/${req.files['bannerFile'][0].filename}`;
+        updateData.banner = req.files['bannerFile'][0].path; // FIX
       }
     }
 
     const updatedProfile = await Profile.findOneAndUpdate(
-      { username: username },
+      { username: req.params.username },
       { $set: updateData },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
-
     res.status(200).json(updatedProfile);
   } catch (err) {
     res.status(500).json({ message: "Update failed", error: err });
