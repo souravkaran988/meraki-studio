@@ -1,0 +1,65 @@
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { Sparkles, Mail, Lock, User, ArrowRight } from "lucide-react";
+
+const Auth = () => {
+  const [isLogin, setIsLogin] = useState(true);
+  const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+    try {
+      const res = await axios.post(`http://localhost:5000${endpoint}`, formData);
+      if (isLogin) {
+        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("username", res.data.username);
+        navigate("/");
+        window.location.reload();
+      } else {
+        setIsLogin(true);
+      }
+    } catch (err) {
+      alert("Error: Check your credentials");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0d1117] text-white">
+      <div className="w-full max-w-md bg-[#161b22] p-10 rounded-[3rem] border border-white/10 shadow-2xl">
+        <h1 className="text-3xl font-black mb-8 italic text-center">
+          {isLogin ? "Login to Meraki" : "Join the Studio"}
+        </h1>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {!isLogin && (
+            <input 
+              type="text" placeholder="Username" 
+              className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"
+              onChange={(e) => setFormData({...formData, username: e.target.value})}
+            />
+          )}
+          <input 
+            type="email" placeholder="Email" 
+            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+          />
+          <input 
+            type="password" placeholder="Password" 
+            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"
+            onChange={(e) => setFormData({...formData, password: e.target.value})}
+          />
+          <button type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-blue-500 transition-all">
+            {isLogin ? "Sign In" : "Register"}
+          </button>
+        </form>
+        <button onClick={() => setIsLogin(!isLogin)} className="w-full mt-6 text-gray-500 text-sm hover:text-white">
+          {isLogin ? "Need an account? Sign Up" : "Have an account? Login"}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default Auth;
