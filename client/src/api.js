@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// We are hardcoding the Render URL to stop it from looking at localhost
+// This points specifically to your LIVE Render backend
 const API_URL = "https://meraki-studio.onrender.com/api"; 
 
 const API = axios.create({
