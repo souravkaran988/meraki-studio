@@ -12,7 +12,7 @@ const Auth = () => {
     e.preventDefault();
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
     try {
-      const res = await axios.post(`http://localhost:5000${endpoint}`, formData);
+      const res = await API.post(`http://localhost:5000${endpoint}`, formData);
       if (isLogin) {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("username", res.data.username);
