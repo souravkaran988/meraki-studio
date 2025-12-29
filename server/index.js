@@ -17,10 +17,16 @@ const __dirname = path.dirname(__filename);
 const app = express();
 
 // --- MIDDLEWARE ---
-app.use(cors());
+// FIX: Added specific origin to allow your Vercel Frontend to communicate with this Backend
+app.use(cors({
+  origin: ["https://meraki-studio-lac.vercel.app", "http://localhost:3000"],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
+
 app.use(express.json());
 
-// --- CLOUDINARY CONFIGURATION (The Fix) ---
+// --- CLOUDINARY CONFIGURATION ---
 cloudinary.config({
   cloud_name: "dvvlo2wsr",
   api_key: "857828378427176",
@@ -97,7 +103,6 @@ app.get("/api/posts/user/:username", async (req, res) => {
 app.post("/api/posts", upload.single("imageFile"), async (req, res) => {
   try {
     const { username, title, description, imageUrl, tags } = req.body;
-    // FIX: Use req.file.path which is the Cloudinary URL
     let finalImage = req.file ? req.file.path : imageUrl;
     
     const newPost = new Post({ 
@@ -125,7 +130,7 @@ app.put("/api/posts/:id", upload.single("imageFile"), async (req, res) => {
     };
 
     if (req.file) {
-      updateData.image = req.file.path; // FIX: Use Cloudinary path
+      updateData.image = req.file.path; 
     } else if (imageUrl) {
       updateData.image = imageUrl;
     }
@@ -218,10 +223,10 @@ app.put("/api/profile/:username", upload.fields([
 
     if (req.files) {
       if (req.files['avatarFile']) {
-        updateData.avatar = req.files['avatarFile'][0].path; // FIX
+        updateData.avatar = req.files['avatarFile'][0].path; 
       }
       if (req.files['bannerFile']) {
-        updateData.banner = req.files['bannerFile'][0].path; // FIX
+        updateData.banner = req.files['bannerFile'][0].path; 
       }
     }
 
