@@ -8,17 +8,27 @@ const router = express.Router();
 // --- REGISTER ---
 router.post("/register", async (req, res) => {
   try {
+    const { username, email, password } = req.body;
+
+    // Check if user already exists to prevent crashes
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json("User already exists with this email!");
+    }
+
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(req.body.password, salt);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const newUser = new User({
-      username: req.body.username,
-      email: req.body.email,
+      username,
+      email,
       password: hashedPassword,
     });
+
     const user = await newUser.save();
     res.status(200).json(user);
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: "Registration failed", error: err });
   }
 });
 
@@ -27,17 +37,22 @@ router.post("/login", async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) return res.status(404).json("User not found!");
+
     const validPassword = await bcrypt.compare(req.body.password, user.password);
     if (!validPassword) return res.status(400).json("Wrong password!");
+
+    // Generate JWT Token
     const token = jwt.sign(
       { id: user._id, username: user.username },
-      "meraki_secret_key", 
+      process.env.JWT_SECRET || "meraki_secret_key", 
       { expiresIn: "3d" }
     );
+
+    // Remove password from the response for security
     const { password, ...others } = user._doc;
     res.status(200).json({ ...others, token });
   } catch (err) {
-    res.status(500).json(err);
+    res.status(500).json({ message: "Login failed", error: err });
   }
 });
 
