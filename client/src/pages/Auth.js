@@ -1,25 +1,24 @@
 import React, { useState } from "react";
 import API from "../api.js"
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Mail, Lock, User, ArrowRight } from "lucide-react";
+import { Sparkles, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // FIX: We use /auth/login because the "api" part is already in our baseURL in api.js
     const endpoint = isLogin ? "/auth/login" : "/auth/register";
     try {
-      // FIX: Removed "http://localhost:5000/api" - API.js handles the URL now
       const res = await API.post(endpoint, formData);
       
       if (isLogin) {
         localStorage.setItem("token", res.data.token);
         localStorage.setItem("username", res.data.username);
-        localStorage.setItem("user", JSON.stringify(res.data)); // Store full user object
+        localStorage.setItem("user", JSON.stringify(res.data));
         navigate("/");
         window.location.reload();
       } else {
@@ -51,11 +50,22 @@ const Auth = () => {
             className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"
             onChange={(e) => setFormData({...formData, email: e.target.value})}
           />
-          <input 
-            type="password" placeholder="Password" 
-            className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500"
-            onChange={(e) => setFormData({...formData, password: e.target.value})}
-          />
+          {/* PASSWORD FIELD WITH EYE TOGGLE */}
+          <div className="relative">
+            <input 
+              type={showPassword ? "text" : "password"}
+              placeholder="Password" 
+              className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-blue-500 pr-12"
+              onChange={(e) => setFormData({...formData, password: e.target.value})}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
+          </div>
           <button type="submit" className="w-full bg-blue-600 py-4 rounded-2xl font-bold uppercase tracking-widest hover:bg-blue-500 transition-all">
             {isLogin ? "Sign In" : "Register"}
           </button>

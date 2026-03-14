@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "../api.js"
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Share2, Send, Trash2, X, Search, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Send, Trash2, X, Search, Sparkles } from "lucide-react";
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
@@ -10,10 +10,11 @@ const Home = () => {
   const [currentUser, setCurrentUser] = useState("");
   const [selectedPost, setSelectedPost] = useState(null);
   const [commentText, setCommentText] = useState("");
+  const [profiles, setProfiles] = useState({});
 
   const fetchPosts = async () => {
     try {
-      const res = await API.get("http://localhost:5000/api/posts");
+      const res = await API.get("/posts");
       setPosts(res.data);
       setFilteredPosts(res.data);
       if (selectedPost) {
@@ -25,11 +26,31 @@ const Home = () => {
     }
   };
 
+  const fetchProfiles = async (posts) => {
+    try {
+      const usernames = [...new Set(posts.map(p => p.username))];
+      const profileMap = {};
+      await Promise.all(usernames.map(async (username) => {
+        const res = await API.get(`/profile/${username}`);
+        profileMap[username] = res.data;
+      }));
+      setProfiles(profileMap);
+    } catch (err) {
+      console.error("Error fetching profiles:", err);
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem("username") || "sourav";
     setCurrentUser(storedUser);
     fetchPosts();
   }, []);
+
+  useEffect(() => {
+    if (posts.length > 0) {
+      fetchProfiles(posts);
+    }
+  }, [posts]);
 
   useEffect(() => {
     const results = posts.filter(post =>
@@ -42,7 +63,7 @@ const Home = () => {
   const handleLike = async (e, postId) => {
     e.stopPropagation(); 
     try {
-      await API.put(`http://localhost:5000/api/posts/${postId}/like`, { username: currentUser });
+      await API.put(`/posts/${postId}/like`, { username: currentUser });
       fetchPosts();
     } catch (err) { console.error(err); }
   };
@@ -51,7 +72,7 @@ const Home = () => {
     e.preventDefault();
     if (!commentText.trim()) return;
     try {
-      await API.post(`http://localhost:5000/api/posts/${selectedPost._id}/comment`, {
+      await API.post(`/posts/${selectedPost._id}/comment`, {
         username: currentUser,
         text: commentText
       });
@@ -63,7 +84,7 @@ const Home = () => {
   const handleDeleteComment = async (commentId) => {
     if (window.confirm("Delete your comment?")) {
       try {
-        await API.delete(`http://localhost:5000/api/posts/${selectedPost._id}/comment/${commentId}`);
+        await API.delete(`/posts/${selectedPost._id}/comment/${commentId}`);
         fetchPosts();
       } catch (err) { console.error(err); }
     }
@@ -84,7 +105,7 @@ const Home = () => {
         </h1>
         
         <p className="text-gray-500 font-medium max-w-xl mb-12 leading-relaxed">
-          The world’s most extraordinary digital masterpieces. Search by title or tag to discover brilliance instantly.
+          The world's most extraordinary digital masterpieces. Search by title or tag to discover brilliance instantly.
         </p>
 
         <div className="relative w-full max-w-xl group">
@@ -127,7 +148,6 @@ const Home = () => {
                 </span>
               </div>
 
-              {/* --- LIKES & COMMENTS MOVED HERE (ABOVE USERNAME) --- */}
               <div className="flex items-center gap-4 mb-3">
                 <button 
                   onClick={(e) => handleLike(e, post._id)} 
@@ -146,12 +166,24 @@ const Home = () => {
                 </div>
               </div>
 
+              {/* --- PROFILE PICTURE + NAME --- */}
               <Link 
                 to={`/profile/${post.username}`} 
-                className="text-gray-500 text-xs italic hover:text-blue-400 transition-colors block"
+                className="flex items-center gap-2 mt-2 group/author"
                 onClick={(e) => e.stopPropagation()}
               >
-                by @{post.username}
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-blue-600 flex-shrink-0 border border-white/10">
+                  {profiles[post.username]?.avatar ? (
+                    <img src={profiles[post.username].avatar} className="w-full h-full object-cover" alt={post.username} />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-[10px] font-black">
+                      {post.username?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <span className="text-gray-500 text-xs italic group-hover/author:text-blue-400 transition-colors">
+                  by @{post.username}
+                </span>
               </Link>
             </div>
           </div>
@@ -172,12 +204,19 @@ const Home = () => {
                 <div className="w-full md:w-[450px] flex flex-col bg-[#0d1117]">
                   <div className="p-10 border-b border-white/5">
                     <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-400 rounded-full flex items-center justify-center font-black">
+                      {/* --- REAL PROFILE PICTURE IN MODAL --- */}
+                      <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-600 flex-shrink-0 border border-white/10">
+                        {profiles[selectedPost.username]?.avatar ? (
+                          <img src={profiles[selectedPost.username].avatar} className="w-full h-full object-cover" alt={selectedPost.username} />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center font-black">
                             {selectedPost.username?.charAt(0).toUpperCase()}
-                        </div>
-                        <Link to={`/profile/${selectedPost.username}`} className="font-bold text-lg hover:text-blue-400 transition-colors">
-                          {selectedPost.username}
-                        </Link>
+                          </div>
+                        )}
+                      </div>
+                      <Link to={`/profile/${selectedPost.username}`} className="font-bold text-lg hover:text-blue-400 transition-colors">
+                        {selectedPost.username}
+                      </Link>
                     </div>
                     <h2 className="text-3xl font-black mb-4">{selectedPost.title}</h2>
                     <p className="text-gray-500 text-sm leading-relaxed mb-6">{selectedPost.description}</p>

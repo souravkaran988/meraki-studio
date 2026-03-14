@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import API from "../api.js"
-import { Heart, MessageCircle, ImageIcon, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Sparkles } from "lucide-react";
 
 const Profile = () => {
   const { username } = useParams();
@@ -11,8 +11,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const postsRes = await API.get(`http://localhost:5000/api/posts/user/${username}`);
-        const profileRes = await API.get(`http://localhost:5000/api/profile/${username}`);
+        const postsRes = await API.get(`/posts/user/${username}`);
+        const profileRes = await API.get(`/profile/${username}`);
         setPosts(postsRes.data);
         setProfile(profileRes.data);
       } catch (err) { console.error(err); }
@@ -24,7 +24,6 @@ const Profile = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-10 text-white">
-      {/* HEADER SECTION (Same as Dashboard but no Edit buttons) */}
       <div className="relative mb-12 rounded-[3.5rem] overflow-hidden bg-[#161b22] border border-white/10 shadow-2xl">
         <div className="h-72 bg-gradient-to-r from-blue-900/40 to-cyan-900/40">
           {profile.banner && <img src={profile.banner} className="w-full h-full object-cover" alt="" />}
@@ -50,7 +49,6 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* CREATOR'S GALLERY */}
       <h2 className="text-2xl font-black mb-8 italic flex items-center gap-3">
         <Sparkles className="text-blue-500" /> Recent Works
       </h2>

@@ -8,7 +8,6 @@ import fs from "fs";
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 
-// Import your Auth Route
 import authRoute from "./routes/auth.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -16,25 +15,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-
 // --- MIDDLEWARE ---
-// This version allows all origins to ensure the connection works immediately
 app.use(cors({
-  origin: true, 
+  origin: ["http://localhost:3000", "https://meraki-studio-lac.vercel.app"],
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
 }));
-
-app.use(express.json());
-
-// Extra Header Fix: Manual override for safety
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://meraki-studio-lac.vercel.app");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  next();
-});
-
 app.use(express.json());
 
 // --- CLOUDINARY CONFIGURATION ---
@@ -115,7 +100,6 @@ app.post("/api/posts", upload.single("imageFile"), async (req, res) => {
   try {
     const { username, title, description, imageUrl, tags } = req.body;
     let finalImage = req.file ? req.file.path : imageUrl;
-    
     const newPost = new Post({ 
       username, 
       title, 
@@ -123,7 +107,6 @@ app.post("/api/posts", upload.single("imageFile"), async (req, res) => {
       tags: tags ? tags.split(",").map(tag => tag.trim()) : [], 
       image: finalImage 
     });
-    
     await newPost.save();
     res.status(201).json(newPost);
   } catch (err) {
@@ -139,13 +122,11 @@ app.put("/api/posts/:id", upload.single("imageFile"), async (req, res) => {
       description, 
       tags: tags ? tags.split(",").map(tag => tag.trim()) : [] 
     };
-
     if (req.file) {
-      updateData.image = req.file.path; 
+      updateData.image = req.file.path;
     } else if (imageUrl) {
       updateData.image = imageUrl;
     }
-
     const updatedPost = await Post.findByIdAndUpdate(req.params.id, updateData, { new: true });
     res.json(updatedPost);
   } catch (err) {
@@ -166,7 +147,6 @@ app.put("/api/posts/:id/like", async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     const { username } = req.body;
-    
     if (!post.likes.includes(username)) {
       await post.updateOne({ $push: { likes: username } });
       res.status(200).json("Liked");
@@ -231,16 +211,14 @@ app.put("/api/profile/:username", upload.fields([
     const { bio } = req.body;
     let updateData = {};
     if (bio !== undefined) updateData.bio = bio;
-
     if (req.files) {
       if (req.files['avatarFile']) {
-        updateData.avatar = req.files['avatarFile'][0].path; 
+        updateData.avatar = req.files['avatarFile'][0].path;
       }
       if (req.files['bannerFile']) {
-        updateData.banner = req.files['bannerFile'][0].path; 
+        updateData.banner = req.files['bannerFile'][0].path;
       }
     }
-
     const updatedProfile = await Profile.findOneAndUpdate(
       { username: req.params.username },
       { $set: updateData },
