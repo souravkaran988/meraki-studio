@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -26,8 +28,10 @@ app.use("/uploads", express.static(uploadDir));
 // --- ROUTES ---
 app.use("/api/auth", authRoute);
 
+console.log("🔍 MONGO_URI loaded:", process.env.MONGO_URI);
+
 // --- DATABASE CONNECTION ---
-mongoose.connect(MONGO_URI)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ DB Connected & Meraki Server Running"))
   .catch((err) => console.log("❌ DB Connection Error:", err));
 
