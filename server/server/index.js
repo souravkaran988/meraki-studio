@@ -27,7 +27,6 @@ app.use("/uploads", express.static(uploadDir));
 app.use("/api/auth", authRoute);
 
 // --- DATABASE CONNECTION ---
-const MONGO_URI = "mongodb+srv://sourav:souravkaran@cluster0.mtxul8p.mongodb.net/meraki?retryWrites=true&w=majority&appName=Cluster0";
 mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ DB Connected & Meraki Server Running"))
   .catch((err) => console.log("❌ DB Connection Error:", err));
